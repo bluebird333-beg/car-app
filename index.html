@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="차량관리">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>차량 관리 일지</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#111;--bg2:#1a1a1a;--bg3:#222;--bg4:#2a2a2a;
+  --border:#333;--border2:#444;
+  --text:#f0f0f0;--text2:#999;--text3:#666;
+  --accent:#4a9eff;--accent2:#1a6fd4;
+  --green:#2eb87a;--red:#e05050;--amber:#d4971a;
+  --radius:10px;--radius2:14px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.5;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh;max-width:600px;margin:0 auto}
+
+/* Header */
+.header{padding:env(safe-area-inset-top,16px) 16px 0;padding-top:max(env(safe-area-inset-top),16px)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px}
+.logo{font-size:17px;font-weight:600;letter-spacing:-0.3px}
+.logo span{color:var(--accent)}
+.btn-add-top{background:var(--accent);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-add-top:active{opacity:0.8}
+
+/* Tabs */
+.tabs{display:flex;padding:0 16px 12px;gap:8px}
+.tab{flex:1;padding:9px 0;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg2);font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);transition:all 0.15s;text-align:center}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.tab:active{opacity:0.8}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 12px}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:12px 14px;border:1px solid var(--border)}
+.stat-label{font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+.stat-value{font-size:20px;font-weight:700;letter-spacing:-0.5px}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* Search */
+.search-bar{padding:0 16px 10px;display:flex;gap:8px}
+.search-bar input,.search-bar select{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-size:13px;outline:none;-webkit-appearance:none}
+.search-bar input{flex:1}
+.search-bar select{width:100px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.search-bar input:focus,.search-bar select:focus{border-color:var(--accent)}
+
+/* List */
+.list{flex:1;overflow-y:auto;padding:0 16px;padding-bottom:calc(env(safe-area-inset-bottom,16px) + 16px);-webkit-overflow-scrolling:touch}
+.list::-webkit-scrollbar{display:none}
+.rec-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px;margin-bottom:8px;position:relative;cursor:pointer;transition:background 0.1s}
+.rec-card:active{background:var(--bg3)}
+.rec-date{font-size:11px;color:var(--text3);margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.rec-name{font-size:14px;font-weight:500;margin-bottom:6px;line-height:1.4;color:var(--text);white-space:pre-wrap;word-break:break-all}
+.rec-meta{display:flex;align-items:center;gap:10px}
+.rec-amount{font-size:15px;font-weight:700;color:var(--accent)}
+.rec-amount.free{color:var(--green);font-size:12px;background:rgba(46,184,122,0.12);padding:2px 8px;border-radius:20px}
+.rec-km{font-size:12px;color:var(--text3);margin-left:auto}
+.rec-note{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5;white-space:pre-wrap;border-left:2px solid var(--border2);padding-left:8px}
+.del-btn{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:6px;line-height:1}
+.del-btn:active{background:rgba(224,80,80,0.15);color:var(--red)}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.count-bar{font-size:11px;color:var(--text3);text-align:center;padding:4px 0 10px}
+
+/* Chart section */
+.chart-section{padding:0 16px 10px}
+.chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px}
+.chart-title{font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px}
+.year-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.year-label{width:36px;text-align:right;color:var(--text3);flex-shrink:0}
+.bar-track{flex:1;height:18px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.5s ease}
+.year-amt{width:60px;text-align:right;color:var(--text2);font-variant-numeric:tabular-nums}
+
+/* Bottom modal drawer */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.drawer-overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:600px;background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--border2);z-index:101;transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);padding-bottom:env(safe-area-inset-bottom,0)}
+.drawer.open{transform:translateX(-50%) translateY(0)}
+.drawer-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 0}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px}
+.drawer-header h2{font-size:16px;font-weight:600}
+.drawer-close{background:var(--bg3);border:none;color:var(--text2);border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.drawer-body{padding:0 20px 16px;overflow-y:auto;max-height:70vh}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500}
+.form-group input,.form-group textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:11px 13px;color:var(--text);font-size:15px;outline:none;-webkit-appearance:none}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--accent)}
+.form-group textarea{height:80px;resize:none;font-family:inherit}
+.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-save{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:14px;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
+.btn-save:active{background:var(--accent2)}
+
+/* Detail drawer */
+.detail-name{font-size:16px;font-weight:600;line-height:1.5;margin-bottom:14px;white-space:pre-wrap;word-break:break-all}
+.detail-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-key{font-size:13px;color:var(--text3)}
+.detail-val{font-size:14px;font-weight:500;text-align:right}
+.detail-note{margin-top:14px;background:var(--bg3);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-break:break-all}
+.btn-del-detail{width:100%;background:rgba(224,80,80,0.12);color:var(--red);border:1px solid rgba(224,80,80,0.25);border-radius:var(--radius);padding:13px;font-size:14px;font-weight:600;cursor:pointer;margin-top:14px}
+.btn-del-detail:active{background:rgba(224,80,80,0.22)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-inner">
+      <div class="logo">🚗 차량<span>관리</span></div>
+      <button class="btn-add-top" onclick="openAdd()">+ 추가</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('santafe')">싼타페</button>
+      <button class="tab" onclick="switchTab('soul')">쏘울</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="chart-section">
+    <div class="chart-wrap">
+      <div class="chart-title">연도별 지출</div>
+      <div id="yearChart"></div>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input type="search" id="search" placeholder="검색..." oninput="render()" autocomplete="off">
+    <select id="yearFilter" onchange="render()">
+      <option value="">전체</option>
+    </select>
+  </div>
+
+  <div class="count-bar" id="countBar"></div>
+  <div class="list" id="list"></div>
+</div>
+
+<!-- Add drawer -->
+<div class="drawer-overlay" id="addOverlay" onclick="closeAdd()"></div>
+<div class="drawer" id="addDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <h2>새 기록 추가</h2>
+    <button class="drawer-close" onclick="closeAdd()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-group">
+      <label>날짜</label>
+      <input type="date" id="f-date">
+    </div>
+    <div class="form-group">
+      <label>항목명</label>
+      <input type="text" id="f-name" placeholder="예: 엔진오일 교환">
+    </div>
+    <div class="form-row2">
+      <div class="form-group">
+        <label>금액 (원)</label>
+        <input type="number" id="f-amount" placeholder="무상이면 빈칸">
+      </div>
+      <div class="form-group">
+        <label>주행 km</label>
+        <input type="number" id="f-km" placeholder="예: 248900">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>비고</label>
+      <textarea id="f-note" placeholder="메모..."></textarea>
+    </div>
+    <button class="btn-save" onclick="saveRecord()">저장</button>
+  </div>
+</div>
+
+<!-- Detail drawer -->
+<div class="drawer-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<div class="drawer" id="detailDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <h2>기록 상세</h2>
+    <button class="drawer-close" onclick="closeDetail()">✕</button>
+  </div>
+  <div class="drawer-body" id="detailBody"></div>
+</div>
+
+<script>
+const SEED = {"santafe":[{"year":2017,"date":"2018-03-15","name":"차량구입 (싼타페더프라임)","amount":23000000.0,"km":25000,"note":"","id":1},{"year":2017,"date":"2018-03-15","name":"자동차 보험","amount":444060.0,"km":25200,"note":"","id":2},{"year":2017,"date":"2018-03-15","name":"엔진플러싱/오일교환(볼트로닉x7)/에어클리너/오일필터-진해","amount":200000.0,"km":25200,"note":"","id":3},{"year":2017,"date":"2018-04-07","name":"타이어 펑크","amount":10000.0,"km":25300,"note":"","id":4},{"year":2017,"date":"2018-04-28","name":"와이퍼 고무 구매 x 2개","amount":7000.0,"km":26000,"note":"","id":5},{"year":2017,"date":"2018-05-15","name":"앞좌석 시트 교체 (운전석 / 조수석)","amount":null,"km":29415,"note":"","id":6},{"year":2017,"date":"2018-06-10","name":"타이어 펑크","amount":10000.0,"km":33000,"note":"","id":7},{"year":2017,"date":"2018-06-20","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":69300.0,"km":35000,"note":"","id":8},{"year":2017,"date":"2018-06-22","name":"오일필터(H 26320 2F100)","amount":6050.0,"km":35000,"note":"","id":9},{"year":2017,"date":"2018-06-22","name":"에어클리너(H 28113 2W300)","amount":6820.0,"km":35000,"note":"","id":10},{"year":2017,"date":"2018-06-24","name":"엔진오일 교환 (공임나라 - 사상)","amount":14000.0,"km":35100,"note":"오일교환 - 3.5개월 (9,900km)","id":11},{"year":2017,"date":"2018-06-25","name":"리콜 (문현점)","amount":null,"km":35200,"note":"","id":12},{"year":2017,"date":"2018-09-15","name":"타이어 펑크","amount":10000.0,"km":44000,"note":"","id":13},{"year":2017,"date":"2018-10-18","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":70000.0,"km":46100,"note":"","id":14},{"year":2017,"date":"2018-10-18","name":"오일필터 / 에어클리너","amount":17000.0,"km":46100,"note":"","id":15},{"year":2017,"date":"2018-10-26","name":"엔진오일 교환(공임나라-진해) - 4개월","amount":17000.0,"km":46200,"note":"오일교환 - 4개월 (11,100km)","id":16},{"year":2017,"date":"2018-11-29","name":"불스원샷 엔오코팅제","amount":19000.0,"km":49000,"note":"","id":17},{"year":2017,"date":"2018-12-07","name":"안락 주차 중 벽 긁힘 (오른쪽 문)","amount":null,"km":null,"note":"","id":18},{"year":2017,"date":"2018-12-09","name":"락카 / 테이프 등","amount":20000.0,"km":49500,"note":"","id":19},{"year":2017,"date":"2018-12-12","name":"타이어4개(HP71) - 170,000","amount":680000.0,"km":51000,"note":"","id":20},{"year":2017,"date":"2018-12-12","name":"미션오일 교체 + 연료필터","amount":316000.0,"km":51000,"note":"","id":21},{"year":2018,"date":"2018-03-06","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":71400.0,"km":56000,"note":"","id":22},{"year":2018,"date":"2018-03-06","name":"에어클리너 / 오일필터","amount":12870.0,"km":56000,"note":"","id":23},{"year":2018,"date":"2018-03-06","name":"엔진오일 교환 (공임나라 - 사상) - 4개월","amount":14000.0,"km":56000,"note":"오일교환 - 4개월 (9,800km)","id":24},{"year":2018,"date":"2018-06-18","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 6개","amount":55200.0,"km":64900,"note":"","id":25},{"year":2018,"date":"2018-06-21","name":"오일필터 (H 26320 2F100)","amount":6500.0,"km":65100,"note":"","id":26},{"year":2018,"date":"2018-06-21","name":"에어클리너 (H 28113 2W300)","amount":7000.0,"km":65100,"note":"","id":27},{"year":2018,"date":"2018-06-21","name":"에어컨 항균필터 (H97133 2W000)","amount":11000.0,"km":65100,"note":"","id":28},{"year":2018,"date":"2018-07-03","name":"엔진오일 교환 (공임나라 - 반여) - 4개월","amount":14000.0,"km":65693,"note":"오일교환 - 4개월 (9,693km)\n엔진오일 상태가 매우 불량 - 플러싱추천(65,000원)","id":29},{"year":2018,"date":"2018-08-03","name":"3년차 점검 (용원 블루핸즈)","amount":null,"km":68851,"note":"상태 OK","id":30},{"year":2018,"date":"2018-08-03","name":"에어컨 항균필터 (H97133 2W000)","amount":11000.0,"km":68851,"note":"","id":31},{"year":2018,"date":"2018-09-01","name":"자석 모기장 구입","amount":35000.0,"km":70100,"note":"","id":32},{"year":2018,"date":"2018-09-01","name":"자석 모기장의 자석으로 인해 외장 기스","amount":null,"km":null,"note":"","id":33},{"year":2018,"date":"2018-09-22","name":"왼쪽 앞범퍼 긁힘(누군지 확인불가)","amount":null,"km":null,"note":"","id":34},{"year":2018,"date":"2018-10-02","name":"락카 / 락카펜 구매","amount":23000.0,"km":72890,"note":"","id":35},{"year":2018,"date":"2018-10-16","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":null,"km":73970,"note":"","id":36},{"year":2018,"date":"2018-10-30","name":"오일필터 (H 26320 2F100)","amount":6050.0,"km":74734,"note":"","id":37},{"year":2018,"date":"2018-10-30","name":"에어클리너 (H 28113 2W300)","amount":6820.0,"km":74734,"note":"","id":38},{"year":2018,"date":"2018-10-30","name":"에어컨 항균필터 (H97133 2W000)","amount":11000.0,"km":74734,"note":"","id":39},{"year":2018,"date":"2018-10-30","name":"엔진오일 교환 (공임나라 - 반여) - 4개월","amount":14000.0,"km":74740,"note":"오일교환 - 4개월 (9,047km)\n7개 오일 사용, 브레이크오일교체 추천","id":40},{"year":2019,"date":"2019-02-14","name":"연로게이지 이상증상 (주행 중 갑자기 연료게이지 급다운)","amount":null,"km":null,"note":"증상이 있을 때 다시 오라고 함","id":41},{"year":2019,"date":"2019-02-14","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":62318.0,"km":81415,"note":"","id":42},{"year":2019,"date":"2019-02-15","name":"오일필터 (H 26320 2F100)","amount":6050.0,"km":81435,"note":"","id":43},{"year":2019,"date":"2019-02-15","name":"에어클리너 (H 28113 2W300)","amount":6820.0,"km":81435,"note":"","id":44},{"year":2019,"date":"2019-02-15","name":"에어컨 항균필터 (H97133 2W000)","amount":11000.0,"km":81435,"note":"94460-2W900 연료센서 번호","id":45},{"year":2019,"date":"2019-02-26","name":"엔진오일 교환 (공임나라 - 사상) - 4개월","amount":16000.0,"km":82115,"note":"오일교환 - 4개월 (7,375km)","id":46},{"year":2019,"date":"2019-02-26","name":"브레이크오일 구매 (공임나라 - 사상)","amount":15800.0,"km":82115,"note":"CARBO OIL - DOT 4 (독일제)","id":47},{"year":2019,"date":"2019-02-26","name":"브레이크오일 교환 (공임나라 - 사상)","amount":33000.0,"km":82115,"note":"냉각수 교환 추천 (KIXX CX AF Coolant, 3L)\n타이어 앞뒤 교체 추천","id":48},{"year":2019,"date":"2019-06-27","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 6개","amount":55800.0,"km":91500,"note":"","id":49},{"year":2019,"date":"2019-06-27","name":"부동액(GS칼텍스 CX부동액 3L)","amount":13000.0,"km":91500,"note":"","id":50},{"year":2019,"date":"2019-07-02","name":"오일필터 (H 26320 2F100)","amount":6500.0,"km":91777,"note":"진해점이 조금 비싼 듯","id":51},{"year":2019,"date":"2019-07-02","name":"에어클리너 (H 28113 2W300)","amount":7000.0,"km":91777,"note":"진해점이 조금 비싼 듯","id":52},{"year":2019,"date":"2019-07-02","name":"에어컨 항균필터 (H97133 2W000)","amount":11000.0,"km":91777,"note":"금액 동일","id":53},{"year":2019,"date":"2019-07-02","name":"엔진오일 교환 (공임나라 - 진해) - 4개월","amount":16000.0,"km":91778,"note":"오일교환 - 4개월 (9,663km)\n브레이크패드교환필요(25%잔여), 외벨트세트,\n오토미션오일, 흡배기크리닝, 인젝터압축와샤클린\n냉각수는 벨트 교체 시 함께 작업 시 유리하다고 함","id":54},{"year":2019,"date":"2020-09-25","name":"KB손해보험 자동차 보험","amount":329180.0,"km":100700,"note":"","id":55},{"year":2019,"date":"2019-11-01","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":63200.0,"km":100700,"note":"(개당 9000원)","id":56},{"year":2019,"date":"2019-11-05","name":"오일필터 (H 26320 2F100)","amount":6050.0,"km":101178,"note":"","id":57},{"year":2019,"date":"2019-11-05","name":"에어클리너 (H 28113 2W300)","amount":7370.0,"km":101178,"note":"","id":58},{"year":2019,"date":"2019-11-05","name":"에어컨 필터 (H97133 2W000)","amount":11000.0,"km":101178,"note":"","id":59},{"year":2019,"date":"2019-11-05","name":"엔진오일 교환 (공임나라 - 수영) - 4개월","amount":16000.0,"km":101178,"note":"오일교환 - 4개월 (9,400km)\n브레이크앞패드, 연료필터, 벨트SET(부동액), \n크리닝SET = 총 50만원 정도 소요예상됨","id":60},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 풀리 댐퍼(H 23124 2F602)","amount":67430.0,"km":104500,"note":"","id":61},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 리브드벨트(H 25212 2F320)","amount":27500.0,"km":104500,"note":"","id":62},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 텐셔너 어셈블리(H 25281 2F002)","amount":25960.0,"km":104500,"note":"","id":63},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 풀리 아이들러(H 25287 2F000)","amount":7920.0,"km":104500,"note":"","id":64},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 풀리 아이들러(H 25288 2F000)","amount":8470.0,"km":104500,"note":"","id":65},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 아이들 - 드라이브벨트(H 25287 27060)","amount":14300.0,"km":104500,"note":"","id":66},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 가스켓 워터펌프(H 25130 2F000)","amount":1100.0,"km":104500,"note":"","id":67},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 오링(H 25462 2F000)","amount":1100.0,"km":104500,"note":"","id":68},{"year":2019,"date":"2019-12-17","name":"겉벨트세트부품 - 펌프 어셈플리 쿨런트(H 25100 2F700)","amount":54120.0,"km":104500,"note":"","id":69},{"year":2019,"date":"2019-12-17","name":"패드 키트 - 프론트 디스크 브레이크(H 58101 2WA40)","amount":52030.0,"km":104500,"note":"","id":70},{"year":2019,"date":"2019-12-17","name":"겉벨트 세트 교환 (공임나라 - 반여)","amount":135000.0,"km":104500,"note":"흡배기 크리닝 - 현금 30만원 행사 중이라고 함","id":71},{"year":2019,"date":"2019-12-17","name":"프론트 브레이크 패드 교환 (공임나라 - 반여)","amount":27000.0,"km":104500,"note":"","id":72},{"year":2020,"date":"2020-03-27","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":59490.0,"km":108650,"note":"(개당 8500원)","id":73},{"year":2020,"date":"2020-03-30","name":"오일필터 (H 26320 2F100)","amount":6050.0,"km":108800,"note":"","id":74},{"year":2020,"date":"2020-03-30","name":"에어클리너 (H 28113 2W300)","amount":7370.0,"km":108800,"note":"","id":75},{"year":2020,"date":"2020-03-30","name":"에어컨 필터 (H97133 2W000)","amount":11000.0,"km":108800,"note":"","id":76},{"year":2020,"date":"2020-04-23","name":"엔진오일 교환 (공임나라 - 명장) - 5개월","amount":16000.0,"km":109762,"note":"오일교환 - 5개월 (8,584km)","id":77},{"year":2020,"date":"2020-09-10","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":57380.0,"km":119000,"note":"위메프 - 판매자명(고려유통) (개당 8200원)","id":78},{"year":2020,"date":"2020-09-17","name":"오일필터 (H 26320 2F100)","amount":6050.0,"km":119400,"note":"","id":79},{"year":2020,"date":"2020-09-17","name":"에어클리너 (H 28113 2W300)","amount":7370.0,"km":119400,"note":"","id":80},{"year":2020,"date":"2020-09-17","name":"에어컨 필터 (H97133 2W000)","amount":11000.0,"km":119400,"note":"","id":81},{"year":2020,"date":"2020-09-17","name":"엔진오일 교환 (공임나라 - 사상) - 5개월","amount":16000.0,"km":119400,"note":"오일교환 - 5개월 (9,738km)","id":82},{"year":2021,"date":"2021-03-11","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 6개","amount":54000.0,"km":128130,"note":"네이버 - 무주G포트 (개당 9000원)","id":83},{"year":2021,"date":"2021-03-11","name":"오일필터 (H 26320 2F100)","amount":6050.0,"km":128130,"note":"영일상사 - 창원시 남산동 601-34\n매장 앞 잠시 주차 가능","id":84},{"year":2021,"date":"2021-03-11","name":"에어클리너 (H 28113 2W300)","amount":7370.0,"km":128130,"note":"","id":85},{"year":2021,"date":"2021-03-11","name":"에어컨 필터 (H97133 2W000)","amount":11000.0,"km":128130,"note":"","id":86},{"year":2021,"date":"2021-03-11","name":"트렁크매트","amount":56000.0,"km":128162,"note":"DK몰 - 네이버쇼핑","id":87},{"year":2021,"date":"2021-03-12","name":"현대모비스 하이브리드 와이퍼 교체 (650 - 350)","amount":null,"km":128162,"note":"코스트코 - 이경준 선물 ","id":88},{"year":2021,"date":"2021-03-15","name":"잔기스 방지 커버 (도어, 글로브박스, 트렁크)","amount":46800.0,"km":128162,"note":"22do 몰 - 네이버쇼핑","id":89},{"year":2021,"date":"2021-03-20","name":"엔진오일 교환 (공임나라 - 사상) - 5개월","amount":16000.0,"km":128400,"note":"오일교환 - 6개월 (9,000km), 반개 남음(보관)\n앞타이어 교환 필요\n미션오일 교환 필요\n브래이크패드-뒤쪽","id":90},{"year":2021,"date":"2021-03-31","name":"전자파킹 시스템 버튼 부품 교환 (재송동 블루핸즈)","amount":43600.0,"km":128862,"note":"오토스탑 후 자동으로 전자파킹이 \n걸리는 부분에 대한 수리\n추후 같은 증상이면 모듈 교체 필요 (50만원이상)","id":91},{"year":2021,"date":"2021-04-08","name":"앞쪽 타이어 2개 교체 (HP71-235/55/19)","amount":280000.0,"km":129888,"note":"뒤쪽 타이어 편마모가 심하다고 함\n일주일 정도 타다가 휠얼라이먼트 봐준다고 함\n원동 타이어뱅크","id":92},{"year":2021,"date":"2021-04-11","name":"첫 배터리 방전","amount":null,"km":129950,"note":"긴급출동 부름, 배터리 수명이 다됐다고 함\nAGM95로 교체 예정 (안골)\n예상비용: 현금가 170,000원\n전자파킹 문제가 배터리가 원인일 수도 있겠다는…","id":93},{"year":2021,"date":"2021-04-13","name":"배터리교체 (델코 AGM95)","amount":170000.0,"km":130010,"note":"안골 황금배터리 010-3444-2384","id":94},{"year":2021,"date":"2021-04-13","name":"오른쪽 앞범퍼 긁힘발견 (누군지 모름)","amount":null,"km":130010,"note":"","id":95},{"year":2021,"date":"2021-04-23","name":"미션 이상 의심 현상\n엑셀에서 발을 때고 속도가 줄어들다가 40km이하로 떨어질 때 차가 울컥하면서 RPM에 살짝 올랐다가 다시 떨어진다.","amount":null,"km":130800,"note":"카페에서는 킥다운현상으로 정상이라고 함","id":96},{"year":2021,"date":"2021-06-02","name":"미션오일 교환  (공임나라 - 해운대)","amount":135000.0,"km":133700,"note":"차가 울컥하는 증상 완화됨","id":97},{"year":2021,"date":"2021-07-27","name":"엔진오일(프로피카 ECO-DRIVE LONGLIFE1 5W30) x 7개","amount":66370.0,"km":136549,"note":"유진상사 구매 (개당 9480원)","id":98},{"year":2021,"date":"2021-07-28","name":"오일필터 (H 26320 2F100)","amount":6050.0,"km":136549,"note":"장림 현대모비스 - 어머니결재","id":99},{"year":2021,"date":"2021-07-28","name":"에어클리너 (H 28113 2W300)","amount":7370.0,"km":136549,"note":"장림 현대모비스 - 어머니결재","id":100},{"year":2021,"date":"2021-07-28","name":"에어컨 필터 (H97133 2W000)","amount":11000.0,"km":136549,"note":"장림 현대모비스 - 어머니결재","id":101},{"year":2021,"date":"2021-08-21","name":"엔진오일 교환 (공임나라 - 사상) - 5개월","amount":16000.0,"km":137200,"note":"오일교환 - 5개월 (8,800km), 반개 남음(보관)","id":102},{"year":2021,"date":"2021-12-15","name":"오일필터 (K 26320 2F100)","amount":6100.0,"km":142800,"note":"다음 엔진 오일 교환 시 연료필터 갈자!","id":103},{"year":2022,"date":"2022-01-05","name":"연료필터 아세이 (31970 2W950)","amount":54500.0,"km":143300,"note":"사상구 가야대로 86","id":104},{"year":2022,"date":"2022-01-05","name":"오일 게이지 로드 어셈블리 (26611 2F010)","amount":3100.0,"km":143300,"note":"사상구 가야대로 86","id":105},{"year":2022,"date":"2022-01-05","name":"연료필터 교환 (공임나라 - 사상)","amount":40000.0,"km":143300,"note":"연료필터 4만에 한번 교환 추천","id":106},{"year":2022,"date":"2022-01-05","name":"부동액 교환 작업 (공임나라 - 사상) Kixx CX AF 3L x 2개","amount":78000.0,"km":143300,"note":"장비 사용해서 부동액(냉각수) 교환 4만에 한번 작업 추천","id":107},{"year":2022,"date":"2022-03-17","name":"엔진오일(프로피카 ECO-DRIVE LONGLIFE3 5W30) x 13개","amount":130000.0,"km":146770,"note":"유진상사 구매 (개당 10,000원)","id":108},{"year":2022,"date":"2022-03-24","name":"에어클리너 (H 28113 2W300) - 용원모비스","amount":7370.0,"km":147110,"note":"","id":109},{"year":2022,"date":"2022-03-24","name":"에어컨 필터 (H97133 2W000) - 용원모비스","amount":11000.0,"km":147110,"note":"","id":110},{"year":2022,"date":"2022-03-24","name":"엔진오일 교환 (공임나라 - 사상) - 5개월","amount":16000.0,"km":147120,"note":"오일교환 - 5개월 (9,920km)","id":111},{"year":2022,"date":"2022-03-24","name":"뒤쪽 브레이크 패드 교환 (공임나라 - 사상)","amount":67000.0,"km":147120,"note":"패드 순정품 별도구매없이 공임나라에서 교체\n흡배기 청소 필요 언급 (오일 역류확인)\n관련부품 세척 비용 - 현금 80만원","id":112},{"year":2022,"date":"2022-09-14","name":"오일필터 (K 26320 2F100) - 신용상사 (사상)","amount":6050.0,"km":157825,"note":"오일필터만 구매, 에어클리너는 재고없음","id":113},{"year":2022,"date":"2022-09-14","name":"엔진오일 교환 (공임나라 - 사상) - 5개월","amount":26400.0,"km":157825,"note":"오일교환 - 5개월 (10,705km)\n공임비 (16,000원 -> 18,000원인상)\n+ 에어클리너 8,400원\n디젤차는 연료끝까지 쓰는 것보다 3칸 남으면 무조건 다시 넣는게 좋다고 함","id":114},{"year":2022,"date":"2022-09-21","name":"리콜 (기장점) - 배터리 전류 40A -> 30A 로 낮추고 덮개 교체","amount":0.0,"km":158256,"note":"패드 검사 후 양호하다고 함","id":115},{"year":2023,"date":"2023-02-27","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":80000.0,"km":167550,"note":"네이버 - 무주G포트 (개당 11,000원)","id":116},{"year":2023,"date":"2023-02-28","name":"에어클리너 (H 28113 2W300) - 현대상회","amount":7370.0,"km":167680,"note":"해운대구 재송1로 32번길 9","id":117},{"year":2023,"date":"2023-02-28","name":"에어컨 필터 (H97133 2W000) - 현대상회","amount":11000.0,"km":167680,"note":"해운대구 재송1로 32번길 9","id":118},{"year":2023,"date":"2023-02-28","name":"오일필터 (H 26320 2F100) - 현대상회","amount":6050.0,"km":167680,"note":"해운대구 재송1로 32번길 9","id":119},{"year":2023,"date":"2023-03-07","name":"엔진오일교환 (공임나라 - 사상) - 6개월","amount":19000.0,"km":168050,"note":"오일교환 - 6개월 (10,225km)\n공임비 (18,000 -> 19,000원 인상)\n브레이크오일 상태안좋음 - 82,115km 마지막\n클리닝 작업 추천 받음 (약100만원)\n- 흡기클리닝\n- DPF클리닝\n- 터보클리닝\n- 인젝터클리닝\n겨울에 혹시 시종안걸리면 예열플러그 의심필요","id":120},{"year":2023,"date":"2023-03-07","name":"플러싱 진행","amount":60000.0,"km":168050,"note":"3만에 한번씩 추천 - 198,050","id":121},{"year":2023,"date":"2023-03-07","name":"오일첨가제 \n(쉴드플러스, Shield Plus Engine Oil Treatment 250ml)","amount":40000.0,"km":168050,"note":"플러싱 약품이 강해서 보약을 먹여줘야 한다고 함\n추후에는 시중에서 살것! (2만원대로)\n3만에 한번씩 플러싱 할때 같이 넣어주면 되겠다","id":122},{"year":2023,"date":"2023-03-08","name":"브레이크오일 구매 (쉐보레 DOT4 0.5리터 x 4개)","amount":24300.0,"km":168130,"note":"네이버스토어에서 구매\n교환주기 50,000km (218,130km 교환필요)","id":123},{"year":2023,"date":"2023-03-28","name":"브레이크오일 교환 (공임나라 - 사상)","amount":33000.0,"km":169526,"note":"5만에 한번씩 추천 - 219,526\n클리닝작업 추천 - 010-3649-9700 최부장\n평일 월 ~ 목 오전 9시부터 저녁까지","id":124},{"year":2023,"date":"2023-05-10","name":"카밈 울트라 엔진 에디티브 (엔진첨가제)","amount":42900.0,"km":172223,"note":"1+1+1 할인특가로 구매\n엔진속찌꺼기 제거 등 효과에 대한 광고가\n많아서 구입해봄","id":125},{"year":2023,"date":"2023-09-06","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 6개","amount":67500.0,"km":180484,"note":"네이버 무주 G포트에서 구매(11,250원/EA)","id":126},{"year":2023,"date":"2023-09-07","name":"에어클리너 (H 28113 2W300) - 제욱상사","amount":7370.0,"km":180484,"note":"부산 사상구 가야대로 229(주례동)","id":127},{"year":2023,"date":"2023-09-07","name":"에어컨 필터 (H97133 2W000) - 제욱상사","amount":11000.0,"km":180484,"note":"","id":128},{"year":2023,"date":"2023-09-07","name":"오일필터 (H 26320 2F100) - 제욱상사","amount":6050.0,"km":180484,"note":"","id":129},{"year":2023,"date":"2023-09-07","name":"흡기/밸브/연소실/인젝터/DPF/터보 클리닝\n엔진오일교환(공임나라 사상)\n엔진플러싱, 연료첨가제, 수분제거제, 엔진코팅제\n동와셔, EGR쿨러크리닝, 호스3개, 부동액(순환액)\n보조물통, 브라운가스시공","amount":950000.0,"km":180484,"note":"","id":130},{"year":2024,"date":"2024-02-01","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":73430.0,"km":190380,"note":"네이버 더포탈에서 구매 (10,490원/EA)","id":131},{"year":2024,"date":"2024-02-06","name":"에어클리너 (H 28113 2W300) - 제일상사","amount":7370.0,"km":190550,"note":"부산 강서구 송정길 181","id":132},{"year":2024,"date":"2024-02-06","name":"에어컨 필터 (H97133 2W000) - 제일상사","amount":11000.0,"km":190550,"note":"","id":133},{"year":2024,"date":"2024-02-06","name":"오일필터 (H 26320 2F100) - 제일상사","amount":6050.0,"km":190550,"note":"","id":134},{"year":2024,"date":"2024-02-14","name":"엔진오일교환(공임나라 수안카닥터)","amount":19000.0,"km":191233,"note":"10,749km 이용 (5개월)","id":135},{"year":2024,"date":"2024-03-05","name":"전면 유리 교체 - 현대자동차유리 (거제)","amount":300000.0,"km":192780,"note":"사재품 유리(한성유리), 레이블럭 썬팅","id":136},{"year":2024,"date":"2024-03-05","name":"블랙박스 GPS A타입","amount":14100.0,"km":192780,"note":"아이머큐리용으로 샀지만 작동안됨","id":137},{"year":2024,"date":"2024-06-20","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 7개","amount":77000.0,"km":200400,"note":"네이버 더포탈에서 구매 (10,500원/EA)-오일보이","id":138},{"year":2024,"date":"2024-07-15","name":"에어클리너 (H 28113 2W300) - 제일상사","amount":7370.0,"km":202000,"note":"재송동 현대상회","id":139},{"year":2024,"date":"2024-07-15","name":"에어컨 필터 (H97133 2W000) - 제일상사","amount":11000.0,"km":202000,"note":"재송동 현대상회","id":140},{"year":2024,"date":"2024-07-15","name":"오일필터 (H 26320 2F100) - 제일상사","amount":6050.0,"km":202000,"note":"재송동 현대상회","id":141},{"year":2024,"date":"2024-07-19","name":"엔진오일교환(공임나라 기장)","amount":21000.0,"km":202214,"note":"10,981km 이용 (5개월)\n타이어 교체 건의, 패드는 앞뒤 OK\n엔진오일 반 남아서 보관","id":142},{"year":2024,"date":"2024-09-14","name":"타이어 4개 교환 - 타이어뱅크 용원신항점","amount":577000.0,"km":207300,"note":"타이어위치교환시기 - 222,000km\n2차타이어위치교환 - 237,000km","id":143},{"year":2024,"date":"2024-09-14","name":"기름게이지의 오작동 심각해짐","amount":null,"km":207300,"note":"연료센서의 고장의심\n연료센서와 계기판을 연결하는 전선의 단선 의심\n계기판 자체의 고장의심","id":144},{"year":2024,"date":"2024-10-14","name":"에어컨필터(대한 3+1 활성탄 PM2.5)","amount":13900.0,"km":null,"note":"주식회사 대한청정산업 (배송비3000원포함)","id":145},{"year":2024,"date":"2024-10-14","name":"도매꾹 불스원 살라딘 훈증캔 2개","amount":18520.0,"km":null,"note":"주식회사 올림생활 (배송비3000원포함)","id":146},{"year":2024,"date":"2024-10-17","name":"에어컨필터 교체","amount":null,"km":null,"note":"","id":147},{"year":2024,"date":"2024-11-04","name":"왼쪽 뒤쪽 타이어 칼날 박힘","amount":10000.0,"km":201830,"note":"타이어프로 마린센텀점에서 수리진행","id":148},{"year":2024,"date":"2024-11-27","name":"블랙박스 Z7 (에이스카오디오)","amount":140000.0,"km":212000,"note":"블랙박스 설치포함 120,000원+ 동글이 20,000원","id":149},{"year":2024,"date":"2024-11-27","name":"블랙박스 Z7 GPS","amount":15615.0,"km":212000,"note":"11번가 구매","id":150},{"year":2024,"date":"2024-12-03","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 13개","amount":145600.0,"km":213400,"note":"무주지포트 공홈에서 구매 (개당 11,200원)","id":151},{"year":2024,"date":"2024-12-11","name":"에어클리너 (H 28113 2W300) - 제일상사","amount":7370.0,"km":213942,"note":"부산 강서구 송정길 181","id":152},{"year":2024,"date":"2024-12-11","name":"오일필터 (H 26320 2F100) - 제일상사","amount":6050.0,"km":213942,"note":"","id":153},{"year":2024,"date":"2024-12-11","name":"엔진오일교환 (공임나라 - 사상) - 5개월","amount":21000.0,"km":213970,"note":"223,970km 교환예정","id":154},{"year":2025,"date":"2025-04-22","name":"에어클리너 (H 28113 2W300) - 화인상사","amount":7370.0,"km":224045,"note":"녹산동","id":155},{"year":2025,"date":"2025-04-22","name":"에어컨 필터 (H97133 2W000) - 화인상사","amount":11000.0,"km":224045,"note":"녹산동","id":156},{"year":2025,"date":"2025-04-22","name":"오일필터 (H 26320 2F100) - 화인상사","amount":6050.0,"km":224045,"note":"녹산동","id":157},{"year":2025,"date":"2025-04-22","name":"엔진오일교환 (공임나라 - 사상) - 4개월","amount":21000.0,"km":224056,"note":"234,056km 교환예정\n쉘힐릭스 울트라 5W30 1개 남음","id":158},{"year":2025,"date":"2025-06-19","name":"자동차 정기 검사 - 결과 양호","amount":59000.0,"km":228054,"note":"용원자동차검사정비 (055-552-4972)","id":159},{"year":2025,"date":"2025-09-22","name":"엔진오일(쉘힐릭스 울트라 5W30 ECT C3) x 12개","amount":134300.0,"km":234500,"note":"롯데온에서 킹오일판매자 (개당 11,192원)","id":160},{"year":2025,"date":"2025-10-01","name":"에어클리너 (H 28113 2W300) - 화인상사","amount":7370.0,"km":235565,"note":"녹산동","id":161},{"year":2025,"date":"2025-10-01","name":"에어컨 필터 (H97133 2W000) - 화인상사","amount":11000.0,"km":235565,"note":"녹산동","id":162},{"year":2025,"date":"2025-10-01","name":"오일필터 (H 26320 2F100) - 화인상사","amount":6050.0,"km":235565,"note":"녹산동","id":163},{"year":2025,"date":"2025-10-01","name":"엔진오일교환 (공임나라 - 명지) - 5개월","amount":16000.0,"km":235565,"note":"245,565km 교환예정\n쉘힐릭스 울트라 5W30 6.5개 남음\n브레이크패드 20%남음 4개교환시 13만원 \n미션오일 교환 시 13만원","id":164},{"year":2025,"date":"2025-11-25","name":"미션오일 교체 (공임나라 명지) 캐스트롤 TM ATF","amount":130000.0,"km":240880,"note":"게기판 문제는 연료펌프 교환필요, \n부품가격은 확인필요, 공임은 8만원","id":165},{"year":2026,"date":"2026-02-24","name":"에어클리너 (H 28113 2W300) - 제일상사","amount":8140.0,"km":246930,"note":"송정동","id":166},{"year":2026,"date":"2026-02-24","name":"에어컨 필터 (H97133 2W000) - 제일상사","amount":11000.0,"km":246930,"note":"송정동","id":167},{"year":2026,"date":"2026-02-24","name":"오일필터 (H 26320 2F100) - 제일상사","amount":6710.0,"km":246930,"note":"송정동","id":168},{"year":2026,"date":"2026-02-24","name":"엔진오일교환 (공임나라 - 명지) - 5개월","amount":21000.0,"km":246944,"note":"브레이크 오일 교환필요\n앞브레이크 패드 교체필요\n외벨트세트 교체필요\n오일새는 tube교체필요\nHID 라이트 벌브 교체필요","id":169},{"year":2026,"date":"2026-03-18","name":"타이어4개교체 타이어뱅크 원동IC점","amount":550000.0,"km":248000,"note":"26만에 워치교환 받을것 1년 2만키로보험","id":170},{"year":2026,"date":"2026-03-19","name":"외부벨트세트+워터펌프+댐퍼플리 풀세트","amount":205690.0,"km":248500,"note":"DC카몰 네이버 구매","id":171},{"year":2026,"date":"2026-03-24","name":"HID 라이트 벌브 (H1864735010C) 2개 (왼쪽, 오른쪽)","amount":128000.0,"km":248900,"note":"해운대 현대상회","id":172},{"year":2026,"date":"2026-03-24","name":"펑션블럭 & 호스앗세이 (H314502F600)","amount":48000.0,"km":248900,"note":"해운대 현대상회","id":173}],"soul":[{"year":2021,"date":"2021-12-14","name":"자동차 보험 (KB손해보험)","amount":406930.0,"km":115992,"note":"","id":1},{"year":2021,"date":"2021-12-15","name":"전방 라이트 전구 (H4) K 08C06 30002","amount":8000.0,"km":115992,"note":"12V-60/55W 2개","id":2},{"year":2021,"date":"2021-12-15","name":"필터 어셈블리-엔진오일필터 (K 26300 35505)","amount":3100.0,"km":115992,"note":"","id":3},{"year":2021,"date":"2021-12-15","name":"필터 - 에어클리너 (K 28113 2K000)","amount":6000.0,"km":115992,"note":"","id":4},{"year":2021,"date":"2021-12-15","name":"엔진오일 - SK ZIC X7 5W-30 4L","amount":28000.0,"km":115992,"note":"","id":5},{"year":2021,"date":"2021-12-15","name":"(공임나라 - 장유) - 엔진오일 교환","amount":16000.0,"km":115992,"note":"합성유 사용 125,992km 교환 필요 (10,000km)","id":6},{"year":2022,"date":"2022-07-09","name":"공임나라 사상 - 타이어 2개","amount":185000.0,"km":117677,"note":"","id":7},{"year":2022,"date":"2022-07-09","name":"공임나라 사상 - 로우암좌/우","amount":180000.0,"km":117677,"note":"차 하단부에서 나는 소리 잡기 위함\n기아자동차에서는 쇼바 및 고무 등 교체\n총 현금 80만원 견적(기아차)\n공임나라에서는 쇼바는 문제없다고 함","id":8},{"year":2022,"date":"2022-07-09","name":"공임나라 사상 - 활대링크 좌/우","amount":80000.0,"km":117677,"note":"","id":9},{"year":2022,"date":"2022-07-09","name":"공임나라 사상 - 하체수리","amount":278000.0,"km":117677,"note":"","id":10},{"year":2022,"date":"2022-11-10","name":"플러그 4개 / 호일 4개 교환","amount":135000.0,"km":null,"note":"가속시에 덜덜거리는 소리로 인해 명지 기아차에서 수리 진행","id":11},{"year":2023,"date":"2023-07-17","name":"엔진오일 교체","amount":50000.0,"km":124136,"note":"일반유 사용 129,000km 교환필요 (약 5,000km)","id":12},{"year":2023,"date":"2023-07-17","name":"에어컨 수리 (섬진 삼창카)","amount":60000.0,"km":124136,"note":"에어컨 가스가 샌다고 교체시 30만원예상","id":13},{"year":2024,"date":"2024-07-23","name":"에어컨 필터 (97133 2K000)","amount":10500.0,"km":127592,"note":"(진해 한양기아부품)","id":14},{"year":2024,"date":"2024-08-14","name":"리콜 방문 (멀티퓨즈)","amount":null,"km":128672,"note":"명지기아오토큐","id":15},{"year":2024,"date":"2024-08-19","name":"오른쪽 사이드미러 주문","amount":41600.0,"km":128672,"note":"지파츠에서 주문","id":16},{"year":2026,"date":"2026-01-22","name":"배터리 긴급출동","amount":null,"km":null,"note":"블랙박스 주차시 전원꺼짐 옵션선택","id":17},{"year":2026,"date":"2026-01-23","name":"주차 중 사고 당함","amount":null,"km":135771,"note":"뒤쪽 범퍼 교환 및 교통비 37260 받음(삼성화재)","id":18},{"year":2026,"date":"2026-01-30","name":"엔진오일 / 배터리 교환","amount":150000.0,"km":135800,"note":"삼창카에서 작업 (배터리 10만 + 엔진오일 5만)","id":19}]};
+const SF_KEY='car_sf_v3', SOUL_KEY='car_soul_v3';
+let currentTab='santafe', detailId=null;
+
+function getKey(){ return currentTab==='santafe'?SF_KEY:SOUL_KEY; }
+
+function loadData(){
+  try{
+    const s=localStorage.getItem(getKey());
+    if(s) return JSON.parse(s);
+  }catch(e){}
+  const src=currentTab==='santafe'?SEED.santafe:SEED.soul;
+  const d=src.map((r,i)=>({...r,id:i+1}));
+  saveData(d); return d;
+}
+
+function saveData(d){
+  try{ localStorage.setItem(getKey(),JSON.stringify(d)); }catch(e){}
+}
+
+function fmt(n){ return n==null?'':Math.round(n).toLocaleString(); }
+
+function switchTab(t){
+  currentTab=t;
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('active',(i===0&&t==='santafe')||(i===1&&t==='soul'));
+  });
+  document.getElementById('search').value='';
+  document.getElementById('yearFilter').value='';
+  renderAll();
+}
+
+function renderAll(){ renderStats(); renderChart(); populateYears(); render(); }
+
+function renderStats(){
+  const d=loadData();
+  const paid=d.filter(r=>r.amount>0);
+  const total=paid.reduce((s,r)=>s+(r.amount||0),0);
+  const yr=new Date().getFullYear();
+  const yTotal=d.filter(r=>r.amount>0&&parseInt(r.date)===yr).reduce((s,r)=>s+(r.amount||0),0);
+  const kms=d.filter(r=>r.km).map(r=>r.km);
+  const maxKm=kms.length?Math.max(...kms):0;
+  const last=d[d.length-1];
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><div class="stat-label">총 기록</div><div class="stat-value">${d.length}<span style="font-size:14px;font-weight:400;color:var(--text3)">건</span></div></div>
+    <div class="stat"><div class="stat-label">누적 지출</div><div class="stat-value">${Math.round(total/10000).toLocaleString()}<span style="font-size:14px;font-weight:400;color:var(--text3)">만</span></div></div>
+    <div class="stat"><div class="stat-label">${yr}년 지출</div><div class="stat-value">${Math.round(yTotal/10000).toLocaleString()}<span style="font-size:14px;font-weight:400;color:var(--text3)">만</span></div></div>
+    <div class="stat"><div class="stat-label">현재 주행</div><div class="stat-value">${Math.round(maxKm/1000).toLocaleString()}<span style="font-size:14px;font-weight:400;color:var(--text3)">천km</span></div><div class="stat-sub">${last?last.date:''}</div></div>
+  `;
+}
+
+function renderChart(){
+  const d=loadData();
+  const by={};
+  d.forEach(r=>{const y=parseInt(r.date);if(!by[y])by[y]=0;by[y]+=(r.amount||0);});
+  const years=Object.keys(by).sort();
+  const max=Math.max(...Object.values(by));
+  const colors=['#4a9eff','#2eb87a','#d4971a','#e05050','#c060d0','#50c8c8','#ff7a40','#8899aa'];
+  let h='';
+  years.forEach((y,i)=>{
+    const v=by[y],pct=Math.round(v/max*100);
+    h+=`<div class="year-row"><span class="year-label">${y}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[i%colors.length]}"></div></div><span class="year-amt">${Math.round(v/10000)}만</span></div>`;
+  });
+  document.getElementById('yearChart').innerHTML=h;
+}
+
+function populateYears(){
+  const d=loadData();
+  const years=[...new Set(d.map(r=>parseInt(r.date)))].sort((a,b)=>b-a);
+  const sel=document.getElementById('yearFilter');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">전체</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  sel.value=cur;
+}
+
+function render(){
+  const d=loadData();
+  const q=document.getElementById('search').value.toLowerCase();
+  const yr=document.getElementById('yearFilter').value;
+  let filtered=d.filter(r=>{
+    const mq=!q||r.name.toLowerCase().includes(q)||(r.note||'').toLowerCase().includes(q);
+    const my=!yr||String(parseInt(r.date))===yr;
+    return mq&&my;
+  }).reverse();
+  document.getElementById('countBar').textContent=`${filtered.length}건`;
+  if(!filtered.length){
+    document.getElementById('list').innerHTML='<div class="empty">기록이 없습니다</div>';
+    return;
+  }
+  document.getElementById('list').innerHTML=filtered.map(r=>`
+    <div class="rec-card" onclick="openDetail(${r.id})">
+      <button class="del-btn" onclick="event.stopPropagation();delRecord(${r.id})">×</button>
+      <div class="rec-date">${r.date}</div>
+      <div class="rec-name">${r.name}</div>
+      <div class="rec-meta">
+        ${r.amount>0?`<span class="rec-amount">${fmt(r.amount)}원</span>`:r.amount===0?'<span class="rec-amount free">무상</span>':r.amount===null&&r.name.includes('교체')?'<span class="rec-amount free">무상</span>':'<span class="rec-amount free">무상/미기재</span>'}
+        ${r.km?`<span class="rec-km">${fmt(r.km)}km</span>`:''}
+      </div>
+      ${r.note?`<div class="rec-note">${r.note}</div>`:''}
+    </div>
+  `).join('');
+}
+
+function openDetail(id){
+  const d=loadData();
+  const r=d.find(x=>x.id===id);
+  if(!r)return;
+  detailId=id;
+  document.getElementById('detailBody').innerHTML=`
+    <div class="detail-name">${r.name}</div>
+    <div class="detail-row"><span class="detail-key">날짜</span><span class="detail-val">${r.date}</span></div>
+    <div class="detail-row"><span class="detail-key">금액</span><span class="detail-val">${r.amount>0?fmt(r.amount)+'원':r.amount===0?'무상':'미기재'}</span></div>
+    <div class="detail-row"><span class="detail-key">주행거리</span><span class="detail-val">${r.km?fmt(r.km)+'km':'-'}</span></div>
+    ${r.note?`<div class="detail-note">${r.note}</div>`:''}
+    <button class="btn-del-detail" onclick="delFromDetail(${id})">이 기록 삭제</button>
+  `;
+  document.getElementById('detailOverlay').classList.add('open');
+  document.getElementById('detailDrawer').classList.add('open');
+}
+function closeDetail(){
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.getElementById('detailDrawer').classList.remove('open');
+}
+function delFromDetail(id){ if(confirm('삭제하시겠습니까?')){ delRecord(id); closeDetail(); } }
+
+function openAdd(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value=today;
+  document.getElementById('f-name').value='';
+  document.getElementById('f-amount').value='';
+  document.getElementById('f-km').value='';
+  document.getElementById('f-note').value='';
+  document.getElementById('addOverlay').classList.add('open');
+  document.getElementById('addDrawer').classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(),350);
+}
+function closeAdd(){
+  document.getElementById('addOverlay').classList.remove('open');
+  document.getElementById('addDrawer').classList.remove('open');
+}
+
+function saveRecord(){
+  const date=document.getElementById('f-date').value;
+  const name=document.getElementById('f-name').value.trim();
+  if(!date||!name){alert('날짜와 항목명은 필수입니다.');return;}
+  const amtRaw=document.getElementById('f-amount').value;
+  const amount=amtRaw?parseFloat(amtRaw):null;
+  const kmRaw=document.getElementById('f-km').value;
+  const km=kmRaw?parseInt(kmRaw):null;
+  const note=document.getElementById('f-note').value.trim();
+  const year=parseInt(date);
+  const d=loadData();
+  const newId=Date.now();
+  d.push({id:newId,year,date,name,amount,km,note});
+  saveData(d);
+  closeAdd();
+  renderAll();
+}
+
+function delRecord(id){
+  if(!confirm('이 기록을 삭제하시겠습니까?'))return;
+  const d=loadData().filter(r=>r.id!==id);
+  saveData(d);
+  renderAll();
+}
+
+// Service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+renderAll();
+</script>
+</body>
+</html>
