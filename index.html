@@ -309,11 +309,29 @@ function openDetail(id){
   if(!r)return;
   detailId=id;
   document.getElementById('detailBody').innerHTML=`
-    <div class="detail-name">${r.name}</div>
-    <div class="detail-row"><span class="detail-key">날짜</span><span class="detail-val">${r.date}</span></div>
-    <div class="detail-row"><span class="detail-key">금액</span><span class="detail-val">${r.amount>0?fmt(r.amount)+'원':r.amount===0?'무상':'미기재'}</span></div>
-    <div class="detail-row"><span class="detail-key">주행거리</span><span class="detail-val">${r.km?fmt(r.km)+'km':'-'}</span></div>
-    ${r.note?`<div class="detail-note">${r.note}</div>`:''}
+    <div class="form-group">
+      <label>날짜</label>
+      <input type="date" id="e-date" value="${r.date}">
+    </div>
+    <div class="form-group">
+      <label>항목명</label>
+      <input type="text" id="e-name" value="${r.name.replace(/"/g,'&quot;')}">
+    </div>
+    <div class="form-row2">
+      <div class="form-group">
+        <label>금액 (원)</label>
+        <input type="number" id="e-amount" value="${r.amount!=null&&r.amount>0?Math.round(r.amount):''}" placeholder="무상이면 빈칸">
+      </div>
+      <div class="form-group">
+        <label>주행 km</label>
+        <input type="number" id="e-km" value="${r.km!=null?r.km:''}" placeholder="없으면 빈칸">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>비고</label>
+      <textarea id="e-note">${r.note||''}</textarea>
+    </div>
+    <button class="btn-save" onclick="saveEdit(${id})">수정 저장</button>
     <button class="btn-del-detail" onclick="delFromDetail(${id})">이 기록 삭제</button>
   `;
   document.getElementById('detailOverlay').classList.add('open');
@@ -324,6 +342,26 @@ function closeDetail(){
   document.getElementById('detailDrawer').classList.remove('open');
 }
 function delFromDetail(id){ if(confirm('삭제하시겠습니까?')){ delRecord(id); closeDetail(); } }
+
+function saveEdit(id){
+  const date=document.getElementById('e-date').value;
+  const name=document.getElementById('e-name').value.trim();
+  if(!date||!name){alert('날짜와 항목명은 필수입니다.');return;}
+  const amtRaw=document.getElementById('e-amount').value;
+  const amount=amtRaw?parseFloat(amtRaw):null;
+  const kmRaw=document.getElementById('e-km').value;
+  const km=kmRaw?parseInt(kmRaw):null;
+  const note=document.getElementById('e-note').value.trim();
+  const year=parseInt(date);
+  const d=loadData();
+  const idx=d.findIndex(r=>r.id===id);
+  if(idx===-1)return;
+  d[idx]={...d[idx],year,date,name,amount,km,note};
+  saveData(d);
+  closeDetail();
+  renderAll();
+  showToast('✅ 수정됐어요');
+}
 
 function openAdd(){
   const today=new Date().toISOString().split('T')[0];
